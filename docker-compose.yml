@@ -35,11 +35,49 @@ services:
       - "7880:7880" # HTTP API
       - "7881:7881" # TCP signaling
       - "7882:7882" # Prometheus metrics
-      - "50000-50100:50000-50100/udp" # WebRTC media (réduit pour éviter les conflits Windows)
+      - "50000-50100:50000-50100/udp" # WebRTC media
     volumes:
       - ./infrastructure/livekit/livekit.yaml:/etc/livekit.yaml
     environment:
       LIVEKIT_KEYS: "devkey_kroom_safe_key_32_chars_long: secret_kroom_safe_secret_32_chars_long_long"
+
+  # Backend Fastify
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: kroom-backend
+    restart: always
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER:-netra}:${DB_PASSWORD:-Passer123}@postgres:5432/${DB_NAME:-netra_kroom}?schema=public
+      - REDIS_URL=redis://redis:6379
+      - LIVEKIT_URL=http://livekit:7880
+      - LIVEKIT_API_KEY=devkey_kroom_safe_key_32_chars_long
+      - LIVEKIT_API_SECRET=secret_kroom_safe_secret_32_chars_long_long
+      - JWT_SECRET=${JWT_SECRET:-super-secret-key-change-this-in-prod}
+      - NODE_ENV=production
+    ports:
+      - "4000:4000"
+    depends_on:
+      - postgres
+      - redis
+      - livekit
+
+  # Frontend Next.js
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    container_name: kroom-frontend
+    restart: always
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:4000
+      - NEXT_PUBLIC_LIVEKIT_URL=ws://localhost:7880
+      - NODE_ENV=production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
 
   # Serveur TURN/STUN Coturn (Optionnel si LiveKit gère tout, mais recommandé pour la prod)
   coturn:
