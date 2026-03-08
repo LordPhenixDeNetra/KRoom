@@ -7,10 +7,12 @@ import api from '@/lib/api';
 import { RoomResponse } from '@kroom/shared-types';
 import { RoomCard } from '@/components/room/room-card';
 import { CreateRoomForm } from '@/components/room/create-room-form';
-import { Plus, Search, RefreshCw, X } from 'lucide-react';
+import { Plus, Search, RefreshCw, X, Video } from 'lucide-react';
+import { Navbar } from '@/components/layout/navbar';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function DashboardPage() {
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const router = useRouter();
   const [rooms, setRooms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,110 +47,138 @@ export default function DashboardPage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header */}
-        <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-lg border bg-card p-6 shadow-sm">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Tableau de bord</h1>
-            <p className="text-muted-foreground">Bienvenue, <span className="font-semibold text-primary">{user.username || user.email}</span></p>
-          </div>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow hover:bg-primary/90 transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              Créer un salon
-            </button>
-            <button
-              onClick={() => {
-                logout();
-                router.push('/login');
-              }}
-              className="rounded-md bg-destructive/10 px-4 py-2 text-sm font-medium text-destructive hover:bg-destructive/20 transition-colors"
-            >
-              Déconnexion
-            </button>
-          </div>
-        </header>
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+      <Navbar />
 
-        {/* Search & Filters */}
-        <div className="mt-8 flex items-center justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Page Header */}
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">Tableau de bord</h1>
+            <p className="mt-1 text-zinc-500 dark:text-zinc-400">Gérez vos salons de visioconférence et collaborez en temps réel</p>
+          </div>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            <Plus className="h-5 w-5" />
+            Nouveau Salon
+          </button>
+        </div>
+
+        {/* Search & Actions */}
+        <div className="flex items-center gap-4 mb-10">
+          <div className="relative flex-1 max-w-md group">
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400 group-focus-within:text-primary transition-colors" />
             <input
               type="text"
-              placeholder="Rechercher un salon..."
-              className="block w-full rounded-md border border-input bg-background pl-10 pr-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              placeholder="Rechercher par nom ou description..."
+              className="block w-full rounded-xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pl-11 pr-4 py-3 text-sm text-zinc-900 dark:text-zinc-50 focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <button 
             onClick={fetchRooms}
-            className="rounded-md border p-2 text-muted-foreground hover:bg-accent transition-colors"
+            className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 text-zinc-500 hover:text-primary hover:border-primary/50 transition-all active:scale-95"
             title="Rafraîchir"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
 
         {/* Content */}
-        <main className="mt-8">
+        <main>
           {loading ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-48 animate-pulse rounded-lg bg-muted"></div>
+                <div key={i} className="h-48 animate-pulse rounded-2xl bg-zinc-200 dark:bg-zinc-800"></div>
               ))}
             </div>
           ) : filteredRooms.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {filteredRooms.map((room) => (
-                <RoomCard key={room.id} room={room} />
-              ))}
-            </div>
+            <motion.div 
+              layout
+              className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3"
+            >
+              <AnimatePresence>
+                {filteredRooms.map((room) => (
+                  <motion.div
+                    key={room.id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <RoomCard room={room} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
           ) : (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed p-12 text-center">
-              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <Search className="h-6 w-6 text-primary" />
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-zinc-300 dark:border-zinc-700 p-20 text-center bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm"
+            >
+              <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 mb-6">
+                <Video className="h-10 w-10 text-primary" />
               </div>
-              <h3 className="mt-4 text-lg font-semibold">Aucun salon trouvé</h3>
-              <p className="mt-2 text-sm text-muted-foreground max-w-xs">
+              <h3 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+                {searchQuery ? "Aucun salon ne correspond" : "Prêt à démarrer ?"}
+              </h3>
+              <p className="mt-3 text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto leading-relaxed">
                 {searchQuery 
-                  ? "Ajustez votre recherche pour trouver ce que vous cherchez."
-                  : "Soyez le premier à créer un salon et invitez vos amis à rejoindre !"}
+                  ? `Nous n'avons trouvé aucun salon pour "${searchQuery}". Essayez avec d'autres mots-clés.`
+                  : "C'est un peu vide ici ! Créez votre premier salon de visioconférence et invitez vos collaborateurs."}
               </p>
               {!searchQuery && (
                 <button
                   onClick={() => setShowCreateModal(true)}
-                  className="mt-6 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                  className="mt-8 rounded-xl bg-primary px-8 py-4 text-sm font-bold text-white shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all hover:scale-105"
                 >
                   Créer mon premier salon
                 </button>
               )}
-            </div>
+            </motion.div>
           )}
         </main>
       </div>
 
       {/* Create Modal Overlay */}
-      {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-lg animate-in fade-in zoom-in duration-200">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold">Créer un nouveau salon</h2>
-              <button 
-                onClick={() => setShowCreateModal(false)}
-                className="rounded-full p-1 hover:bg-accent transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <CreateRoomForm onSuccess={() => setShowCreateModal(false)} />
+      <AnimatePresence>
+        {showCreateModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowCreateModal(false)}
+              className="absolute inset-0 bg-zinc-900/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-lg rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-8 shadow-2xl"
+            >
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Nouveau Salon</h2>
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">Configurez votre espace de collaboration</p>
+                </div>
+                <button 
+                  onClick={() => setShowCreateModal(false)}
+                  className="rounded-xl p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+              <CreateRoomForm onSuccess={() => setShowCreateModal(false)} />
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 }
