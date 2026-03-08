@@ -5,8 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth.store';
 import { RoomResponse, RoomTokenResponse } from '@kroom/shared-types';
-import { Loader2, LogOut, Shield, Video, Mic, Users } from 'lucide-react';
+import { Loader2, LogOut, Shield, Video, Mic, Users, MessageSquare } from 'lucide-react';
 import { KRoomVideoConference } from '@/components/room/video-conference';
+import { Chat } from '@/components/room/chat';
 
 export default function RoomPage() {
   const { slug } = useParams() as { slug: string };
@@ -19,6 +20,7 @@ export default function RoomPage() {
   const [error, setError] = useState('');
   const [password, setPassword] = useState('');
   const [showPasswordInput, setShowPasswordInput] = useState(false);
+  const [showChat, setShowChat] = useState(false);
 
   const loadRoomAndToken = async (joinPassword?: string) => {
     setLoading(true);
@@ -131,11 +133,12 @@ export default function RoomPage() {
     );
   }
 
-  if (tokenData) {
+  if (tokenData && room) {
     return (
       <KRoomVideoConference 
         token={tokenData.token} 
         serverUrl={tokenData.serverUrl} 
+        roomId={room.id}
       />
     );
   }
