@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  # Base de données PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: kroom-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-netra}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-Passer123}
+      POSTGRES_DB: ${DB_NAME:-netra_kroom}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Cache et Pub/Sub Redis
+  redis:
+    image: redis:7-alpine
+    container_name: kroom-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # SFU LiveKit
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: kroom-livekit
+    restart: always
+    command: --config /etc/livekit.yaml
+    ports:
+      - "7880:7880" # HTTP API
+      - "7881:7881" # TCP signaling
+      - "7882:7882" # Prometheus metrics
+      - "50000-60000:50000-60000/udp" # WebRTC media
+    volumes:
+      - ./infrastructure/livekit/livekit.yaml:/etc/livekit.yaml
+    environment:
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY}: ${LIVEKIT_API_SECRET}"
+
+  # Serveur TURN/STUN Coturn (Optionnel si LiveKit gère tout, mais recommandé pour la prod)
+  coturn:
+    image: coturn/coturn:latest
+    container_name: kroom-coturn
+    restart: always
+    ports:
+      - "3478:3478"
+      - "3478:3478/udp"
+      - "5349:5349"
+      - "5349:5349/udp"
+    volumes:
+      - ./infrastructure/docker/turnserver.conf:/etc/coturn/turnserver.conf
+
+volumes:
+  postgres_data:
+  redis_data:
