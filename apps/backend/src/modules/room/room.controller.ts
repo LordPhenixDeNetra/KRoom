@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { roomService } from './room.service';
+import { chatService } from '../chat/chat.service';
 import { createRoomSchema, joinRoomSchema } from '@kroom/shared-types';
 
 export async function roomRoutes(fastify: FastifyInstance) {
@@ -61,5 +62,23 @@ export async function roomRoutes(fastify: FastifyInstance) {
 
     const data = await roomService.generateToken(slug, userId, username);
     return reply.send(data);
+  });
+
+  // Obtenir l'historique des messages d'un salon
+  fastify.get('/:roomId/messages', async (request: FastifyRequest, reply: FastifyReply) => {
+    const { roomId } = request.params as { roomId: string };
+    try {
+      const messages = await chatService.getMessagesByRoom(roomId);
+      return messages.map(m => ({
+        id: m.id,
+        content: m.content,
+        userId: m.userId,
+        username: m.user.username || m.user.email,
+        roomId: m.roomId,
+        createdAt: m.createdAt,
+      }));
+    } catch (error) {
+      return reply.code(500).send({ message: 'Error fetching messages' });
+    }
   });
 }
