@@ -5,7 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth.store';
 import { RoomResponse, RoomTokenResponse } from '@kroom/shared-types';
-import { Loader2, Mic, Video, LogOut, Users, Shield } from 'lucide-react';
+import { Loader2, LogOut, Shield, Video, Mic, Users } from 'lucide-react';
+import { KRoomVideoConference } from '@/components/room/video-conference';
 
 export default function RoomPage() {
   const { slug } = useParams() as { slug: string };
@@ -16,6 +17,35 @@ export default function RoomPage() {
   const [tokenData, setTokenData] = useState<RoomTokenResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPasswordInput, setShowPasswordInput] = useState(false);
+
+  const loadRoomAndToken = async (joinPassword?: string) => {
+    setLoading(true);
+    setError('');
+    try {
+      // 1. Charger les infos du salon
+      const { data: roomData } = await api.get(`/rooms/${slug}`);
+      setRoom(roomData);
+
+      // Si le salon est privé et qu'on n'a pas encore de password
+      if (roomData.isPrivate && !joinPassword) {
+        setShowPasswordInput(true);
+        setLoading(false);
+        return;
+      }
+
+      // 2. Obtenir le token LiveKit
+      const { data: tokenResponse } = await api.post(`/rooms/${slug}/join`, {
+        password: joinPassword
+      });
+      setTokenData(tokenResponse);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Impossible de rejoindre le salon');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -23,25 +53,13 @@ export default function RoomPage() {
       return;
     }
 
-    const loadRoomAndToken = async () => {
-      try {
-        // 1. Charger les infos du salon
-        const { data: roomData } = await api.get(`/rooms/${slug}`);
-        setRoom(roomData);
-
-        // 2. Obtenir le token LiveKit
-        // Note: Pour un salon privé, il faudrait gérer le mot de passe ici
-        const { data: tokenResponse } = await api.post(`/rooms/${slug}/join`);
-        setTokenData(tokenResponse);
-      } catch (err: any) {
-        setError(err.response?.data?.message || 'Impossible de rejoindre le salon');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadRoomAndToken();
   }, [slug, user, router]);
+
+  const handleJoinWithPassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    loadRoomAndToken(password);
+  };
 
   if (loading) {
     return (
@@ -64,6 +82,61 @@ export default function RoomPage() {
           Retour au tableau de bord
         </button>
       </div>
+    );
+  }
+
+  if (showPasswordInput && !tokenData) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-950 p-4 text-white">
+        <div className="w-full max-w-md space-y-8 rounded-lg border border-white/10 bg-zinc-900 p-8 shadow-2xl">
+          <div className="text-center">
+            <Shield className="mx-auto h-12 w-12 text-primary" />
+            <h1 className="mt-4 text-2xl font-bold">Salon privé</h1>
+            <p className="mt-2 text-zinc-400">Ce salon est protégé. Veuillez entrer le mot de passe pour rejoindre.</p>
+          </div>
+
+          <form onSubmit={handleJoinWithPassword} className="mt-8 space-y-6">
+            {error && <div className="rounded bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+            
+            <div>
+              <input
+                type="password"
+                required
+                className="block w-full rounded-md border border-white/10 bg-zinc-950 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Mot de passe du salon"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => router.push('/dashboard')}
+                className="flex-1 rounded-md border border-white/10 px-4 py-2 text-sm font-medium hover:bg-white/5"
+              >
+                Retour
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50"
+              >
+                {loading ? 'Vérification...' : 'Rejoindre'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  if (tokenData) {
+    return (
+      <KRoomVideoConference 
+        token={tokenData.token} 
+        serverUrl={tokenData.serverUrl} 
+      />
     );
   }
 
