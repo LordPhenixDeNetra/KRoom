@@ -56,7 +56,9 @@ export class RoomService {
     const room = await this.getRoomBySlug(roomSlug);
     if (!room) throw new Error('Room not found');
 
-    const token = generateLiveKitToken(roomSlug, username || userId);
+    // On utilise l'ID de l'utilisateur comme identité unique (identity)
+    // et son pseudo comme nom d'affichage (name)
+    const token = await generateLiveKitToken(roomSlug, userId, username);
     
     return {
       token,

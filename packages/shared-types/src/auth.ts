@@ -6,3 +6,9 @@ export const loginSchema = z.object({
 });
 
 export type LoginRequest = z.infer<typeof loginSchema>;
+
+export const registerSchema = loginSchema.extend({
+  username: z.string().min(3).optional(),
+});
+
+export type RegisterRequest = z.infer<typeof registerSchema>;

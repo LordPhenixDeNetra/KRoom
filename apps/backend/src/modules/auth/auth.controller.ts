@@ -1,11 +1,11 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { authService } from './auth.service';
-import { loginSchema } from '@kroom/shared-types';
+import { loginSchema, registerSchema } from '@kroom/shared-types';
 
 export async function authRoutes(fastify: FastifyInstance) {
   // Register
   fastify.post('/register', async (request: FastifyRequest, reply: FastifyReply) => {
-    const body = loginSchema.parse(request.body);
+    const body = registerSchema.parse(request.body);
     try {
       const user = await authService.register(body);
       const token = fastify.jwt.sign({ id: user.id, email: user.email });

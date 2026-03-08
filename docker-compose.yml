@@ -39,7 +39,7 @@ services:
     volumes:
       - ./infrastructure/livekit/livekit.yaml:/etc/livekit.yaml
     environment:
-      LIVEKIT_KEYS: "${LIVEKIT_API_KEY}: ${LIVEKIT_API_SECRET}"
+      LIVEKIT_KEYS: "devkey_kroom_safe_key_32_chars_long: secret_kroom_safe_secret_32_chars_long_long"
 
   # Serveur TURN/STUN Coturn (Optionnel si LiveKit gère tout, mais recommandé pour la prod)
   coturn:

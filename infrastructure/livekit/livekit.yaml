@@ -4,11 +4,11 @@ bind_addresses:
 rtc:
   tcp_port: 7881
   port_range_start: 50000
-  port_range_end: 60000
-  use_external_ip: true
+  port_range_end: 50100
+  use_external_ip: false
 
 logging:
   level: info
 
 keys:
-  devkey: secret
+  devkey_kroom_safe_key_32_chars_long: secret_kroom_safe_secret_32_chars_long_long
