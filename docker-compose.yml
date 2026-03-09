@@ -51,7 +51,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://${DB_USER:-netra}:${DB_PASSWORD:-Passer123}@postgres:5432/${DB_NAME:-netra_kroom}?schema=public
       - REDIS_URL=redis://redis:6379
-      - LIVEKIT_URL=http://livekit:7880
+      - LIVEKIT_URL=https://livekit.hopitalia.cloud
       - LIVEKIT_API_KEY=devkey_kroom_safe_key_32_chars_long
       - LIVEKIT_API_SECRET=secret_kroom_safe_secret_32_chars_long_long
       - JWT_SECRET=${JWT_SECRET:-super-secret-key-change-this-in-prod}
@@ -71,8 +71,8 @@ services:
     container_name: kroom-frontend
     restart: always
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:4000
-      - NEXT_PUBLIC_LIVEKIT_URL=ws://localhost:7880
+      - NEXT_PUBLIC_API_URL=https://apikroom.hopitalia.cloud
+      - NEXT_PUBLIC_LIVEKIT_URL=wss://livekit.hopitalia.cloud
       - NODE_ENV=production
     ports:
       - "3000:3000"

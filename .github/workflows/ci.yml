@@ -1,0 +1,51 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm install
+
+      - name: Lint code
+        run: npm run lint
+
+      - name: Build shared-types package
+        run: npm run build --workspace=@kroom/shared-types
+
+      - name: Build backend
+        run: |
+          cd apps/backend
+          npx prisma generate
+          npm run build
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/postgres?schema=public"
+
+      - name: Build frontend
+        run: npm run build --workspace=@kroom/frontend
+        env:
+          NEXT_PUBLIC_API_URL: "http://localhost:4000"
+          NEXT_PUBLIC_LIVEKIT_URL: "ws://localhost:7880"
+
+      - name: Run tests
+        run: npm run test
